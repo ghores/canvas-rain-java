@@ -6,31 +6,32 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.widget.ImageView;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageView;
 
 import java.util.ArrayList;
 
-public class CanvasView extends androidx.appcompat.widget.AppCompatImageView {
+public class CanvasView extends AppCompatImageView {
 
     private Paint paint;
     private Thread physicThread;
     private Thread renderThread;
-
     private ArrayList<Drop> drops = new ArrayList<>();
 
-    public CanvasView(@NonNull Context context) {
+
+    public CanvasView(Context context) {
         super(context);
         initialize();
     }
 
-    public CanvasView(@NonNull Context context, @Nullable AttributeSet attrs) {
+    public CanvasView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         initialize();
     }
 
-    public CanvasView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public CanvasView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initialize();
     }
@@ -40,13 +41,14 @@ public class CanvasView extends androidx.appcompat.widget.AppCompatImageView {
         paint.setColor(Color.argb(255, 127, 127, 255));
         paint.setStyle(Paint.Style.STROKE);
         paint.setAntiAlias(true);
+
         physicThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 while (true) {
                     try {
                         for (Drop drop : drops) {
-                            drop.size += 0.3 * drop.speed;
+                            drop.size += 0.3f * drop.speed;
                         }
                         Thread.sleep(10);
                     } catch (InterruptedException e) {
@@ -59,8 +61,8 @@ public class CanvasView extends androidx.appcompat.widget.AppCompatImageView {
             @Override
             public void run() {
                 while (true) {
-                    postInvalidate();
                     try {
+                        postInvalidate();
                         Thread.sleep(25);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
@@ -70,21 +72,18 @@ public class CanvasView extends androidx.appcompat.widget.AppCompatImageView {
         });
         physicThread.start();
         renderThread.start();
-
     }
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
-        if (drops.isEmpty()) {
-            for (int i = 0; i < 10; i++) {
-                @SuppressLint("DrawAllocation") Drop drop = new Drop();
-                drop.px = (float) (Math.random() * getWidth());
-                drop.py = (float) (Math.random() * getHeight());
-                drop.size = (float) (Math.random() * 10);
-                drop.speed = (float) (Math.random() * 2 + 1);
-                drops.add(drop);
-            }
+        for (int i = 0; i < 10; i++) {
+            @SuppressLint("DrawAllocation") Drop drop = new Drop();
+            drop.px = (float) (Math.random() * getWidth());
+            drop.py = (float) (Math.random() * getHeight());
+            drop.size = (float) (Math.random() * 10);
+            drop.speed = (float) (Math.random() * 2 + 1);
+            drops.add(drop);
         }
     }
 
@@ -93,7 +92,7 @@ public class CanvasView extends androidx.appcompat.widget.AppCompatImageView {
         super.onDraw(canvas);
 
         for (Drop drop : drops) {
-            float alpha = 255 - drops.size() * 2.55f;
+            float alpha = 255 - drop.size * 2.55f;
             if (alpha < 0) {
                 alpha = 0;
             }
