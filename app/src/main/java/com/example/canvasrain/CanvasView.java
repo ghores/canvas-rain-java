@@ -6,7 +6,8 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
-import android.widget.ImageView;
+import android.util.Log;
+import android.view.MotionEvent;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageView;
@@ -47,10 +48,12 @@ public class CanvasView extends AppCompatImageView {
             public void run() {
                 while (true) {
                     try {
+                        synchronized (drops){
                         for (Drop drop : drops) {
                             drop.size += 0.3f * drop.speed;
                         }
-                        Thread.sleep(10);
+                        }
+                        Thread.sleep(20);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
@@ -90,17 +93,36 @@ public class CanvasView extends AppCompatImageView {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-
-        for (Drop drop : drops) {
-            float alpha = 255 - drop.size * 2.55f;
-            if (alpha < 0) {
-                alpha = 0;
+        synchronized (drops) {
+            for (Drop drop : drops) {
+                float alpha = 255 - drop.size * 2.55f;
+                if (alpha < 0) {
+                    alpha = 0;
+                }
+                if (alpha > 255) {
+                    alpha = 255;
+                }
+                paint.setAlpha((int) alpha);
+                canvas.drawCircle(drop.px, drop.py, drop.size, paint);
             }
-            if (alpha > 255) {
-                alpha = 255;
-            }
-            paint.setAlpha((int) alpha);
-            canvas.drawCircle(drop.px, drop.py, drop.size, paint);
         }
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        float x = event.getX();
+        float y = event.getY();
+        Log.i("TAG", "TOUCHED : " + x + " - " + y);
+        Drop drop = new Drop();
+        drop.px = x;
+        drop.py = y;
+        drop.size = (float) (Math.random() * 10);
+        drop.speed = (float) (Math.random() * 2 + 1);
+        synchronized (drops) {
+            drops.add(drop);
+        }
+        return super.onTouchEvent(event);
+
     }
 }
